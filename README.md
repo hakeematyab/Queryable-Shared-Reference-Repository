@@ -35,7 +35,13 @@ This system will process 3,000-10,000 scientific papers and provide intelligent 
 
 ### Installation
 
-*To be determined*
+```sh
+uv pip install numpy pandas scikit-learn jupyter ipykernel
+
+uv pip install -r requirements.txt
+
+python -m ipykernel install --user --name=QSRR --display-name "Python-QSRR" 
+```
 
 ### Configuration
 
