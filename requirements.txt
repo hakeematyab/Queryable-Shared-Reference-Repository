@@ -36,3 +36,12 @@ spacy>=3.7.0
 # Image EDA (if working with images)
 pillow>=10.0.0
 opencv-python>=4.8.0
+
+# Doc parsing
+PyPDF2
+pdfplumber
+beautifulsoup4 
+python-docx 
+
+# DL Frameworks
+transformers
