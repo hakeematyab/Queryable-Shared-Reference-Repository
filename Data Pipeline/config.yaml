@@ -1,0 +1,34 @@
+# Configuration file for Document Indexing Pipeline
+
+# Embedding Model Configuration
+embedding:
+  model_name: "malteos/scincl"  # SciNCL - Scientific Document Embeddings
+  model_type: "sentence-transformers"
+  device: "cpu"  # Change to "cuda" if GPU available
+  batch_size: 32
+
+# Text Chunking Configuration
+chunking:
+  strategy: "recursive"  # Options: recursive, character, token
+  chunk_size: 512
+  chunk_overlap: 0
+  separators: ["\n\n", "\n", " ", ""]  # Recursive splitting separators
+
+# Vector Database Configuration
+vector_store:
+  type: "chromadb"  # Using ChromaDB instead of FAISS
+  collection_name: "scientific_documents"
+  persist_directory: "./chroma_db"
+  distance_metric: "cosine"  # Options: cosine, l2, ip
+
+# Document Loading Configuration
+document_loader:
+  source_directory: "./docs"
+  file_extensions: [".txt", ".pdf", ".md"]
+  encoding: "utf-8"
+
+# Pipeline Configuration
+pipeline:
+  batch_processing: true
+  show_progress: true
+  error_handling: "log"  # Options: log, raise, skip
