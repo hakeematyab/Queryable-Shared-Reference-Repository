@@ -1,0 +1,9 @@
+/Data Pipeline/.conda
+/Data Pipeline/*.conda
+/Data Pipeline/chroma_db
+/Data Pipeline/IMPLEMENTATION_SUMMARY.md
+/Data Pipeline/readme.md
+/Data Pipeline/docs
+Data Pipeline/src/__pycache__/
+
+
