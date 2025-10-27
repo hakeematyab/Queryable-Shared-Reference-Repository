@@ -294,6 +294,7 @@ def retrieval_metrics(retrieved_docs_list, ground_truth_docs, hit_rate_threshold
         'mrr_mean': np.mean(mrrs),
         'mrr_std': np.std(mrrs)
     }
+runtime_metrics = []
 
 # Iterate and initialize each model
 for embedding_model_name, EmbeddingClass in embedding_classes.items():
@@ -347,10 +348,14 @@ for embedding_model_name, EmbeddingClass in embedding_classes.items():
             chunks = splitter.split_text(doc["text"])
             chunked_datas.extend(chunks)
             metadatas.extend([{"chunk_id": f"{doc_idx}_{strategy}_{chunk_idx}", "source":doc["source"]} for chunk_idx in range(len(chunks))])
-        print(f"⏱️ Chunking: {time.time() - start:.2f}s | Chunks: {len(chunked_datas)}", flush=True)
+        chunking_time = time.time() - start
+        num_chunks = len(chunked_datas)
+        print(f"⏱️ Chunking: {chunking_time:.2f}s | Chunks: {num_chunks}", flush=True)
+        
         start = time.time()
         vector_store = FAISS.from_texts(chunked_datas, embedding_model, metadatas=metadatas)
-        print(f"⏱️ Embedding + FAISS indexing: {time.time() - start:.2f}s", flush=True)
+        embedding_faiss_time = time.time() - start
+        print(f"⏱️ Embedding + FAISS indexing: {embedding_faiss_time:.2f}s", flush=True)
         
         start = time.time()
         retrieved_docs = []
@@ -358,15 +363,33 @@ for embedding_model_name, EmbeddingClass in embedding_classes.items():
             retrieved_doc = vector_store.similarity_search_by_vector(query_embedding, k=5)
             retrieved_doc = [doc.page_content for doc in retrieved_doc]
             retrieved_docs.append(retrieved_doc)
-        print(f"⏱️ Search (3 queries): {time.time() - start:.2f}s", flush=True)
+        search_time = time.time() - start
+        print(f"⏱️ Search (3 queries): {search_time:.2f}s", flush=True)
         
         start = time.time()
         computed_metrics = retrieval_metrics(retrieved_docs, ground_truth_docs)
-        print(f"⏱️ Metrics computation: {time.time() - start:.2f}s", flush=True)
+        metrics_time = time.time() - start
+        print(f"⏱️ Metrics computation: {metrics_time:.2f}s", flush=True)
         
         eval_metrics[strategy] = computed_metrics
+        
+        runtime_metrics.append({
+            'embedding_model': embedding_model_name,
+            'strategy': strategy,
+            'chunking_time_s': round(chunking_time, 2),
+            'num_chunks': num_chunks,
+            'embedding_faiss_time_s': round(embedding_faiss_time, 2),
+            'search_time_s': round(search_time, 2),
+            'metrics_time_s': round(metrics_time, 2),
+            'total_embedding_model_time_s': 0  # Will be updated after all strategies
+        })
 
-    print(f"⏱️Emebdding Model({embedding_model_name}) {time.time() - embedding_model_start_time:.2f}s", flush=True)
+    total_embedding_model_time = time.time() - embedding_model_start_time
+    print(f"⏱️ Embedding Model({embedding_model_name}) {total_embedding_model_time:.2f}s", flush=True)
+    
+    for metric in runtime_metrics:
+        if metric['embedding_model'] == embedding_model_name:
+            metric['total_embedding_model_time_s'] = round(total_embedding_model_time, 2)
 
     results_df = pd.DataFrame.from_dict(eval_metrics, orient="index")
     results_df.index.name = "strategy"
@@ -374,3 +397,6 @@ for embedding_model_name, EmbeddingClass in embedding_classes.items():
     results_df
 
     results_df.to_csv(f"{embedding_model_name}_chunking_strategies_comparison.csv")
+
+runtime_metrics_df = pd.DataFrame(runtime_metrics)
+runtime_metrics_df.to_csv("runtime_metrics.csv", index=False)
