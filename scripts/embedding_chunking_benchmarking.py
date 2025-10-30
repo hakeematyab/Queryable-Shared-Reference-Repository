@@ -26,8 +26,9 @@ from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 
 import torch
+import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
-from adapters import AutoAdapterModel
+# from adapters import AutoAdapterModel
 from multiprocessing import Pool, cpu_count
 
 
@@ -45,139 +46,176 @@ def clear_gpu(*items):
 seed = 42
 random.seed(seed)
 
-class Specter2Embeddings(Embeddings):
-    def __init__(self, model_id = 'allenai/specter2_base', adapter="allenai/specter2", device="cuda", batch_size=1024):
-        self.batch_size = batch_size
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoAdapterModel.from_pretrained(model_id)
-        self.model.load_adapter(adapter, source="hf", load_as="specter2", set_active=True)
-        if device=="cuda":
-            self.model = self.model.cuda()
+# class Specter2Embeddings(Embeddings):
+#     def __init__(self, model_id = 'allenai/specter2_base', adapter="allenai/specter2", device="cuda", batch_size=1024):
+#         self.batch_size = batch_size
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+#         self.model = AutoAdapterModel.from_pretrained(model_id)
+#         self.model.load_adapter(adapter, source="hf", load_as="specter2", set_active=True)
+#         if device=="cuda":
+#             self.model = self.model.cuda()
 
-    def embed_documents(self, texts):
-        outputs = []
-        self.model.eval()
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:min(i + self.batch_size, len(texts))]
-            with torch.no_grad():
-                inputs = self.tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512).to(self.model.device)
+#     def embed_documents(self, texts):
+#         outputs = []
+#         self.model.eval()
+#         for i in range(0, len(texts), self.batch_size):
+#             batch = texts[i:min(i + self.batch_size, len(texts))]
+#             with torch.no_grad():
+#                 inputs = self.tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512).to(self.model.device)
     
-                output = self.model(**inputs)
-                output = output.last_hidden_state[:,0,:].cpu().tolist()
-                outputs.extend(output)
-        return outputs
+#                 output = self.model(**inputs)
+#                 output = output.last_hidden_state[:,0,:].cpu().tolist()
+#                 outputs.extend(output)
+#         return outputs
 
-    def embed_query(self, text):
-        inputs = self.tokenizer([text], padding=True, truncation=True, return_tensors="pt", max_length=512).to(self.model.device)
-        self.model.eval()
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-            outputs = outputs.last_hidden_state[:,0,:].cpu().tolist()[0]
-        return outputs
+#     def embed_query(self, text):
+#         inputs = self.tokenizer([text], padding=True, truncation=True, return_tensors="pt", max_length=512).to(self.model.device)
+#         self.model.eval()
+#         with torch.no_grad():
+#             outputs = self.model(**inputs)
+#             outputs = outputs.last_hidden_state[:,0,:].cpu().tolist()[0]
+#         return outputs
 
 
-class SciNCLEmbeddings(Embeddings):
-    def __init__(self, model_id='malteos/scincl', device="cuda", batch_size=32):
+# class SciNCLEmbeddings(Embeddings):
+#     def __init__(self, model_id='malteos/scincl', device="cuda", batch_size=32):
+#         self.batch_size = batch_size
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+#         self.model = AutoModel.from_pretrained(model_id)
+#         if device == "cuda":
+#             self.model = self.model.cuda()
+    
+#     def embed_documents(self, texts):
+#         outputs = []
+#         self.model.eval()
+#         for i in range(0, len(texts), self.batch_size):
+#             batch = texts[i:min(i + self.batch_size, len(texts))]
+#             with torch.no_grad():
+#                 inputs = self.tokenizer(batch, padding=True, truncation=True, 
+#                                        return_tensors="pt", max_length=512).to(self.model.device)
+#                 output = self.model(**inputs)
+#                 embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
+#                 outputs.extend(embeddings)
+#         return outputs
+    
+#     def embed_query(self, text):
+#         self.model.eval()
+#         inputs = self.tokenizer([text], padding=True, truncation=True, 
+#                                return_tensors="pt", max_length=512).to(self.model.device)
+#         with torch.no_grad():
+#             output = self.model(**inputs)
+#             embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
+#         return embedding
+
+# class SPECTEREmbeddings(Embeddings):
+#     def __init__(self, model_id='allenai/specter', device="cuda", batch_size=32):
+#         self.batch_size = batch_size
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+#         self.model = AutoModel.from_pretrained(model_id)
+#         if device == "cuda":
+#             self.model = self.model.cuda()
+    
+#     def embed_documents(self, texts):
+#         outputs = []
+#         self.model.eval()
+#         for i in range(0, len(texts), self.batch_size):
+#             batch = texts[i:min(i + self.batch_size, len(texts))]
+#             with torch.no_grad():
+#                 inputs = self.tokenizer(batch, padding=True, truncation=True, 
+#                                        return_tensors="pt", max_length=512).to(self.model.device)
+#                 output = self.model(**inputs)
+#                 # CLS token pooling (HuggingFace version)
+#                 embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
+#                 outputs.extend(embeddings)
+#         return outputs
+    
+#     def embed_query(self, text):
+#         self.model.eval()
+#         inputs = self.tokenizer([text], padding=True, truncation=True, 
+#                                return_tensors="pt", max_length=512).to(self.model.device)
+#         with torch.no_grad():
+#             output = self.model(**inputs)
+#             embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
+#         return embedding
+
+# class SciBERTEmbeddings(Embeddings):
+#     def __init__(self, model_id='allenai/scibert_scivocab_uncased', device="cuda", batch_size=32):
+#         self.batch_size = batch_size
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+#         self.model = AutoModel.from_pretrained(model_id)
+#         if device == "cuda":
+#             self.model = self.model.cuda()
+    
+#     def embed_documents(self, texts):
+#         outputs = []
+#         self.model.eval()
+#         for i in range(0, len(texts), self.batch_size):
+#             batch = texts[i:min(i + self.batch_size, len(texts))]
+#             with torch.no_grad():
+#                 inputs = self.tokenizer(batch, padding=True, truncation=True, 
+#                                        return_tensors="pt", max_length=512).to(self.model.device)
+#                 output = self.model(**inputs)
+#                 embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
+#                 outputs.extend(embeddings)
+#         return outputs
+    
+#     def embed_query(self, text):
+#         self.model.eval()
+#         inputs = self.tokenizer([text], padding=True, truncation=True, 
+#                                return_tensors="pt", max_length=512).to(self.model.device)
+#         with torch.no_grad():
+#             output = self.model(**inputs)
+#             embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
+#         return embedding
+
+# class PubMedBERTEmbeddings(Embeddings):
+#     def __init__(self, model_id='microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext', 
+#                  device="cuda", batch_size=32):
+#         self.batch_size = batch_size
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+#         self.model = AutoModel.from_pretrained(model_id)
+#         if device == "cuda":
+#             self.model = self.model.cuda()
+    
+#     def _mean_pooling(self, model_output, attention_mask):
+#         token_embeddings = model_output[0]
+#         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+#         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    
+#     def embed_documents(self, texts):
+#         outputs = []
+#         self.model.eval()
+#         for i in range(0, len(texts), self.batch_size):
+#             batch = texts[i:min(i + self.batch_size, len(texts))]
+#             with torch.no_grad():
+#                 inputs = self.tokenizer(batch, padding=True, truncation=True, 
+#                                        return_tensors="pt", max_length=512).to(self.model.device)
+#                 output = self.model(**inputs)
+#                 embeddings = self._mean_pooling(output, inputs['attention_mask']).cpu().tolist()
+#                 outputs.extend(embeddings)
+#         return outputs
+    
+#     def embed_query(self, text):
+#         self.model.eval()
+#         inputs = self.tokenizer([text], padding=True, truncation=True, 
+#                                return_tensors="pt", max_length=512).to(self.model.device)
+#         with torch.no_grad():
+#             output = self.model(**inputs)
+#             embedding = self._mean_pooling(output, inputs['attention_mask']).cpu().tolist()[0]
+#         return embedding
+
+class MPNetEmbeddings(Embeddings):
+    def __init__(self, model_id='sentence-transformers/all-mpnet-base-v2', device="cuda", batch_size=32, normalize=True):
         self.batch_size = batch_size
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModel.from_pretrained(model_id)
-        if device == "cuda":
-            self.model = self.model.cuda()
-    
-    def embed_documents(self, texts):
-        outputs = []
-        self.model.eval()
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:min(i + self.batch_size, len(texts))]
-            with torch.no_grad():
-                inputs = self.tokenizer(batch, padding=True, truncation=True, 
-                                       return_tensors="pt", max_length=512).to(self.model.device)
-                output = self.model(**inputs)
-                embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
-                outputs.extend(embeddings)
-        return outputs
-    
-    def embed_query(self, text):
-        self.model.eval()
-        inputs = self.tokenizer([text], padding=True, truncation=True, 
-                               return_tensors="pt", max_length=512).to(self.model.device)
-        with torch.no_grad():
-            output = self.model(**inputs)
-            embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
-        return embedding
-
-class SPECTEREmbeddings(Embeddings):
-    def __init__(self, model_id='allenai/specter', device="cuda", batch_size=32):
-        self.batch_size = batch_size
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModel.from_pretrained(model_id)
-        if device == "cuda":
-            self.model = self.model.cuda()
-    
-    def embed_documents(self, texts):
-        outputs = []
-        self.model.eval()
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:min(i + self.batch_size, len(texts))]
-            with torch.no_grad():
-                inputs = self.tokenizer(batch, padding=True, truncation=True, 
-                                       return_tensors="pt", max_length=512).to(self.model.device)
-                output = self.model(**inputs)
-                # CLS token pooling (HuggingFace version)
-                embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
-                outputs.extend(embeddings)
-        return outputs
-    
-    def embed_query(self, text):
-        self.model.eval()
-        inputs = self.tokenizer([text], padding=True, truncation=True, 
-                               return_tensors="pt", max_length=512).to(self.model.device)
-        with torch.no_grad():
-            output = self.model(**inputs)
-            embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
-        return embedding
-
-class SciBERTEmbeddings(Embeddings):
-    def __init__(self, model_id='allenai/scibert_scivocab_uncased', device="cuda", batch_size=32):
-        self.batch_size = batch_size
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModel.from_pretrained(model_id)
-        if device == "cuda":
-            self.model = self.model.cuda()
-    
-    def embed_documents(self, texts):
-        outputs = []
-        self.model.eval()
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:min(i + self.batch_size, len(texts))]
-            with torch.no_grad():
-                inputs = self.tokenizer(batch, padding=True, truncation=True, 
-                                       return_tensors="pt", max_length=512).to(self.model.device)
-                output = self.model(**inputs)
-                embeddings = output.last_hidden_state[:, 0, :].cpu().tolist()
-                outputs.extend(embeddings)
-        return outputs
-    
-    def embed_query(self, text):
-        self.model.eval()
-        inputs = self.tokenizer([text], padding=True, truncation=True, 
-                               return_tensors="pt", max_length=512).to(self.model.device)
-        with torch.no_grad():
-            output = self.model(**inputs)
-            embedding = output.last_hidden_state[:, 0, :].cpu().tolist()[0]
-        return embedding
-
-class PubMedBERTEmbeddings(Embeddings):
-    def __init__(self, model_id='microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext', 
-                 device="cuda", batch_size=32):
-        self.batch_size = batch_size
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModel.from_pretrained(model_id)
+        self.normalize = normalize
         if device == "cuda":
             self.model = self.model.cuda()
     
     def _mean_pooling(self, model_output, attention_mask):
-        token_embeddings = model_output[0]
+        """Mean pooling - take attention mask into account for correct averaging"""
+        token_embeddings = model_output[0]  # First element contains all token embeddings
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
     
@@ -190,8 +228,10 @@ class PubMedBERTEmbeddings(Embeddings):
                 inputs = self.tokenizer(batch, padding=True, truncation=True, 
                                        return_tensors="pt", max_length=512).to(self.model.device)
                 output = self.model(**inputs)
-                embeddings = self._mean_pooling(output, inputs['attention_mask']).cpu().tolist()
-                outputs.extend(embeddings)
+                embeddings = self._mean_pooling(output, inputs['attention_mask'])
+                if self.normalize:
+                    embeddings = F.normalize(embeddings, p=2, dim=1)
+                outputs.extend(embeddings.cpu().tolist())
         return outputs
     
     def embed_query(self, text):
@@ -200,15 +240,62 @@ class PubMedBERTEmbeddings(Embeddings):
                                return_tensors="pt", max_length=512).to(self.model.device)
         with torch.no_grad():
             output = self.model(**inputs)
-            embedding = self._mean_pooling(output, inputs['attention_mask']).cpu().tolist()[0]
-        return embedding
+            embedding = self._mean_pooling(output, inputs['attention_mask'])
+            if self.normalize:
+                embedding = F.normalize(embedding, p=2, dim=1)
+        return embedding.cpu().tolist()[0]
+
+
+class MiniLMEmbeddings(Embeddings):
+    def __init__(self, model_id='sentence-transformers/all-MiniLM-L6-v2', device="cuda", batch_size=32, normalize=True):
+        self.batch_size = batch_size
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.model = AutoModel.from_pretrained(model_id)
+        self.normalize = normalize
+        if device == "cuda":
+            self.model = self.model.cuda()
+    
+    def _mean_pooling(self, model_output, attention_mask):
+        """Mean pooling - take attention mask into account for correct averaging"""
+        token_embeddings = model_output[0]  # First element contains all token embeddings
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    
+    def embed_documents(self, texts):
+        outputs = []
+        self.model.eval()
+        for i in range(0, len(texts), self.batch_size):
+            batch = texts[i:min(i + self.batch_size, len(texts))]
+            with torch.no_grad():
+                inputs = self.tokenizer(batch, padding=True, truncation=True, 
+                                       return_tensors="pt", max_length=512).to(self.model.device)
+                output = self.model(**inputs)
+                embeddings = self._mean_pooling(output, inputs['attention_mask'])
+                if self.normalize:
+                    embeddings = F.normalize(embeddings, p=2, dim=1)
+                outputs.extend(embeddings.cpu().tolist())
+        return outputs
+    
+    def embed_query(self, text):
+        self.model.eval()
+        inputs = self.tokenizer([text], padding=True, truncation=True, 
+                               return_tensors="pt", max_length=512).to(self.model.device)
+        with torch.no_grad():
+            output = self.model(**inputs)
+            embedding = self._mean_pooling(output, inputs['attention_mask'])
+            if self.normalize:
+                embedding = F.normalize(embedding, p=2, dim=1)
+        return embedding.cpu().tolist()[0]
 
 embedding_classes = {
-    'specter2': Specter2Embeddings,
-    'scincl': SciNCLEmbeddings,
-    'specter': SPECTEREmbeddings,
-    'scibert': SciBERTEmbeddings,
-    'pubmedbert': PubMedBERTEmbeddings
+    # 'specter2': Specter2Embeddings,
+    # 'scincl': SciNCLEmbeddings,
+    # 'specter': SPECTEREmbeddings,
+    # 'scibert': SciBERTEmbeddings,
+    # 'pubmedbert': PubMedBERTEmbeddings
+    'mpnet':MPNetEmbeddings,
+    'minilm':MiniLMEmbeddings
+    
 }
 
 
@@ -396,7 +483,7 @@ for embedding_model_name, EmbeddingClass in embedding_classes.items():
     results_df = results_df.reset_index()
     results_df
 
-    results_df.to_csv(f"{embedding_model_name}_chunking_strategies_comparison.csv")
+    results_df.to_csv(f"{embedding_model_name}_chunking_strategies_comparison_new_2.csv")
 
 runtime_metrics_df = pd.DataFrame(runtime_metrics)
-runtime_metrics_df.to_csv("runtime_metrics.csv", index=False)
+runtime_metrics_df.to_csv("runtime_metrics_new2.csv", index=False)
