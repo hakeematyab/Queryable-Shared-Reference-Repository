@@ -166,9 +166,9 @@ Investigation of "Context Rot" revealed the **"Lost in the Middle"** phenomenon:
 - **Target:** 3,000-10,000 scientific papers
 - **Formats:** PDFs, web links, .bib metadata
 
-<!---
-## 🚀 Quick Start
 
+## 🚀 Quick Start
+<!--
 ### Prerequisites
 
 *To be determined*
@@ -193,12 +193,10 @@ qsrr/
 ├── deployment/     # CI/CD and infrastructure
 └── docs/           # Documentation
 ```
-
+-->
 ## 📚 Documentation
 
-- [User Guide](docs/user_guide.md) *(coming soon)*
-- [Technical Documentation](docs/technical.md) *(coming soon)*
-- [API Reference](docs/api.md) *(coming soon)*
+- [Reports](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/tree/main/documentation))
 
 -->
 ## 🤝 Contributions
