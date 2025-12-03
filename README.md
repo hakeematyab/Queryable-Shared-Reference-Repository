@@ -152,7 +152,7 @@ Investigation of "Context Rot" revealed the **"Lost in the Middle"** phenomenon:
 |-----------|-------|-----------|
 | Embedding | Gemma (large context) | Best Hit Rate/MRR with hybrid chunking |
 | Reranker | GTE Reranker | Best MRR with larger context window for scalability |
-| Rerieval | BM25 + Semantic + Reranker | Best Hit Rate, MRR for robust real-world usage |
+| Retrieval | BM25 + Semantic + Reranker | Best Hit Rate, MRR for robust real-world usage |
 | Generation | Qwen3 8B | Highest Faithfulness + Answer Relevancy |
 | Hallucination Detection | Bespoke RoBERTa | Best F1 per billion parameters |
 
