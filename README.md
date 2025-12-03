@@ -196,7 +196,7 @@ qsrr/
 -->
 ## 📚 Documentation
 
-- [Reports](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/tree/main/documentation))
+- [Reports](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/tree/main/documentation)
 
 ## 🤝 Contributions
 
