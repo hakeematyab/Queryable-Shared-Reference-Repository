@@ -52,7 +52,7 @@ Develop an **on-device, shared, queryable repository** of scientific papers that
 - Enables natural language queries across thousands of papers
 - Minimizes fabricated outputs through careful design and evaluation
 - Ensures complete data privacy with no external API dependencies
-- Operates within constrained GPU resources (~20GB VRAM)
+- Operates within constrained GPU resources (~25GB VRAM)
 
 ## ✨ Key Features
 
