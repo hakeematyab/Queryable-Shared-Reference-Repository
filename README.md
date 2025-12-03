@@ -198,7 +198,6 @@ qsrr/
 
 - [Reports](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/tree/main/documentation))
 
--->
 ## 🤝 Contributions
 
 See the [GitHub Contributors Page](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/graphs/contributors) for detailed contribution history.
