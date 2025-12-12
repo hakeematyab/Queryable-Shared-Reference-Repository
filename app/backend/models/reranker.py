@@ -1,6 +1,6 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Literal
+from typing import Optional
 import logging
 
 from models.device import get_device_for_reranker
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class RerankerModel:
     def __init__(
         self,
-        model_type: RerankerModelType = "gte",
+        model_type = "gte",
         device: Optional[str] = None,
         max_workers: int = 1,
         **model_kwargs

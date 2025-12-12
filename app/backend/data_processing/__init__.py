@@ -1,5 +1,5 @@
-from processing.data_processing import DocumentProcessor
-from processing.visualization import draw_chunk_bboxes, visualize_search_results
+from data_processing.data_ingestion import DocumentProcessor
+from data_processing.chunk_visualization import draw_chunk_bboxes, visualize_search_results
 
 __all__ = [
     "DocumentProcessor",

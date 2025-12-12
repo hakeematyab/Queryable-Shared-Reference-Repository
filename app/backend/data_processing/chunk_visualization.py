@@ -1,5 +1,10 @@
+import logging
 from pathlib import Path
+from typing import Dict, List
+
 from PIL import Image, ImageDraw, ImageFont
+
+logger = logging.getLogger(__name__)
 
 
 def draw_chunk_bboxes(

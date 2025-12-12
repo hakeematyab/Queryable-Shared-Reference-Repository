@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class EmbeddingModel:
     def __init__(
         self,
-        model_type: EmbeddingModelType = "gemma",
+        model_type = "gemma",
         device: Optional[str] = None,
         batch_size: int = 32,
         max_workers: int = 1,

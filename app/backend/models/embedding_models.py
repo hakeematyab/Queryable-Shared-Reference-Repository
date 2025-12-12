@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmbeddingGemmaEmbeddings:
-    def __init__(self, model_id='google/embeddinggemma-300m', device="cpu", max_seq_lengt = 2048, batch_size=32):
+    def __init__(self, model_id='google/embeddinggemma-300m', device="cpu", max_seq_length=2048, batch_size=32):
         self.model = SentenceTransformer(model_id, device=device, trust_remote_code=True)
         self.model.max_seq_length = max_seq_length
         self.batch_size = batch_size

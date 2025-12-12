@@ -1,6 +1,6 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Literal, Union
+from typing import Optional, Union
 import logging
 
 from models.device import get_device
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class HallucinationDetector:
     def __init__(
         self,
-        model_type: HallucinationModelType = "roberta",
+        model_type = "roberta",
         device: Optional[str] = None,
         max_workers: int = 1,
         **model_kwargs
@@ -24,7 +24,7 @@ class HallucinationDetector:
             raise ValueError(f"Unknown model type: {model_type}. Available: {list(HALLUCINATION_MODELS.keys())}")
         
         model_factory = HALLUCINATION_MODELS[model_type]
-        self._model: BaseHallucinationDetector = model_factory(device=self._device, **model_kwargs)
+        self._model = model_factory(device=self._device, **model_kwargs)
         
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         logger.info(f"HallucinationDetector initialized: type={model_type}")

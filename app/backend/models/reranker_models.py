@@ -39,7 +39,7 @@ class JinaReranker:
             model_id,
             automodel_args={"torch_dtype": "auto"},
             trust_remote_code=True,
-            max_length=max_length
+            max_length=max_length,
             device=device
         )
         logger.info(f"Loaded Jina Reranker on {device}")
