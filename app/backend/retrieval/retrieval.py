@@ -47,15 +47,14 @@ class HybridSearcher:
         self,
         query: str,
         top_k: int = 5,
-        initial_k: int = 20,
+        initial_k: int = 15,
         use_rerank: bool = True,
         where: Optional[Dict] = None,
     ) -> Dict:
-        half_k = initial_k // 2
         
         query_embedding = self.embedder.embed_query_sync(query)
-        semantic_results = self.store.chroma.search(query_embedding, k=half_k, where=where)
-        bm25_results = self.store.bm25.search(query, k=half_k)
+        semantic_results = self.store.chroma.search(query_embedding, k=initial_k, where=where)
+        bm25_results = self.store.bm25.search(query, k=initial_k)
         merged = merge_results(semantic_results, bm25_results, initial_k)
         
         if use_rerank and self.reranker and merged:
@@ -64,9 +63,9 @@ class HybridSearcher:
             
             text_to_doc = {d["text"]: d for d in merged}
             results = []
-            for r in reranked:
-                doc = text_to_doc[r["text"]].copy()
-                doc["rerank_score"] = r["score"]
+            for text, score in reranked:
+                doc = text_to_doc[text].copy()
+                doc["rerank_score"] = score
                 results.append(doc)
         else:
             results = merged[:top_k]
@@ -81,16 +80,15 @@ class HybridSearcher:
     async def search(
         self,
         query: str,
-        top_k: int = 5,
-        initial_k: int = 20,
+        top_k: int = 3,
+        initial_k: int = 15,
         use_rerank: bool = True,
         where: Optional[Dict] = None,
     ) -> Dict:
-        half_k = initial_k // 2
         
         query_embedding = await self.embedder.embed_query(query)
-        semantic_results = self.store.chroma.search(query_embedding, k=half_k, where=where)
-        bm25_results = self.store.bm25.search(query, k=half_k)
+        semantic_results = self.store.chroma.search(query_embedding, k=initial_k, where=where)
+        bm25_results = self.store.bm25.search(query, k=initial_k)
         merged = merge_results(semantic_results, bm25_results, initial_k)
         
         if use_rerank and self.reranker and merged:
@@ -99,9 +97,9 @@ class HybridSearcher:
             
             text_to_doc = {d["text"]: d for d in merged}
             results = []
-            for r in reranked:
-                doc = text_to_doc[r["text"]].copy()
-                doc["rerank_score"] = r["score"]
+            for text, score in reranked:
+                doc = text_to_doc[text].copy()
+                doc["rerank_score"] = score
                 results.append(doc)
         else:
             results = merged[:top_k]

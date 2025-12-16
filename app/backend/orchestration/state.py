@@ -1,10 +1,6 @@
 from typing import TypedDict, Literal, Optional
 from langchain_core.messages import BaseMessage
 
-class ChatStream(TypedDict):
-    status: Literal["streaming", "completed"]
-    token: str
-
 class GenerationState(TypedDict):
     query: str
     is_data_valid: bool
@@ -15,6 +11,8 @@ class GenerationState(TypedDict):
     citations: Optional[list[str]]
     response: str
     hallucination_score: Optional[int]
-    chat_stream: ChatStream
-
+    retrieved_docs: Optional[list[str]]
+    # Per-turn metadata lists (correspond to AI messages in full_history)
+    citations_history: list[list[str]]
+    hallucination_scores: list[Optional[int]]
     error: Optional[str]
