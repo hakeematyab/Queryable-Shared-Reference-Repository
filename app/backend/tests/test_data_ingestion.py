@@ -22,9 +22,7 @@ class TestDocumentProcessor:
     
     @pytest.fixture(scope="class")
     def sample_pdf(self, tmp_path_factory):
-        # Create a minimal valid PDF for testing
         pdf_path = tmp_path_factory.mktemp("docs") / "test.pdf"
-        # Minimal PDF content
         pdf_content = b"""%PDF-1.4
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj

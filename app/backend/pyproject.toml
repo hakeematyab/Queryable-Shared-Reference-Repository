@@ -19,4 +19,5 @@ dependencies = [
     "docling>=2.0.0",
     "sentence-transformers>=3.0.0",
     "torch>=2.0.0",
+    "pytest>=8.0.0",
 ]
