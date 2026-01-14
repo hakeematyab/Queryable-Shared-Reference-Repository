@@ -74,6 +74,15 @@ else
     echo "✓ Backend dependencies already installed"
 fi
 
+# HuggingFace login (needed for gated models)
+if [ ! -f "$HOME/.cache/huggingface/token" ]; then
+    echo
+    echo "HuggingFace login required for accessing gated models."
+    uv run huggingface-cli login
+else
+    echo "✓ HuggingFace already logged in"
+fi
+
 # Frontend dependencies
 cd "$SCRIPT_DIR/app/frontend"
 if [ ! -d "node_modules" ]; then
