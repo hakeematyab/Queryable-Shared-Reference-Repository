@@ -32,13 +32,15 @@ if ! command -v uv &>/dev/null; then
 fi
 echo "✓ uv available"
 
-# Check and install npm
+# Check and install npm (source nvm first if it exists)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 if ! command -v npm &>/dev/null; then
     read -p "npm not found. Install Node.js via nvm? [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-        export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
         nvm install --lts
     else
