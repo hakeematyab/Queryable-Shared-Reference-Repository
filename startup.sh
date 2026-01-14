@@ -6,6 +6,10 @@ WORKERS=4
 OLLAMA_MODEL="qwen3:8b"
 OLLAMA_HOST="127.0.0.1:11434"
 
+# Source nvm to ensure npm is available
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --prod|-p) MODE="prod"; shift ;;
@@ -96,7 +100,7 @@ else
     BACKEND_PID=$!
 
     cd "$SCRIPT_DIR/app/frontend"
-    npm start &
+    CI=true npm start > "$SCRIPT_DIR/frontend.log" 2>&1 &
     FRONTEND_PID=$!
 fi
 
