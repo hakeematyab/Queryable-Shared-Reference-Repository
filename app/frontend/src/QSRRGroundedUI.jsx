@@ -431,8 +431,8 @@ const QSRRGroundedUI = () => {
   };
 
   const handleFilesSelected = (files) => {
-    const newFiles = files.map(f => ({ name: f.name, path: f.path || f.name }));
-    setPendingFiles(prev => [...prev, ...newFiles]);
+    // Store actual File objects so we can upload their content
+    setPendingFiles(prev => [...prev, ...files]);
   };
 
   const removePendingFile = (index) => {
@@ -467,24 +467,65 @@ const QSRRGroundedUI = () => {
         setActiveChat(newChat);
       }
       
-      // Create user message showing documents being indexed
-      const docNames = pendingFiles.map(f => f.name).join(', ');
-      const filePaths = pendingFiles.map(f => f.path);
+      // Capture files to upload before clearing state
+      const filesToUpload = [...pendingFiles];
+      const docNames = filesToUpload.map(f => f.name).join(', ');
       const userMsg = { id: Date.now(), type: 'user', text: `Index ${docNames}` };
       setMessages(p => [...p, userMsg]);
       setInput('');
       setPendingFiles([]); // Clear immediately so chips disappear
       
-      // Index the files with streaming progress
+      // Step 1: Upload files to server
       setIsIndexing(true);
       const botId = Date.now() + 1;
-      setMessages(p => [...p, { id: botId, type: 'bot', text: '📚 Starting indexing...', isStreaming: true }]);
+      setMessages(p => [...p, { id: botId, type: 'bot', text: '📤 Uploading files...', isStreaming: true }]);
       
+      let serverPaths = [];
+      try {
+        const formData = new FormData();
+        filesToUpload.forEach(file => formData.append('files', file));
+        
+        const uploadRes = await fetch('http://localhost:8000/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadRes.ok) throw new Error(`Upload failed: HTTP ${uploadRes.status}`);
+        
+        const uploadData = await uploadRes.json();
+        if (uploadData.errors && uploadData.errors.length > 0) {
+          console.warn('Some files failed to upload:', uploadData.errors);
+        }
+        serverPaths = uploadData.saved_paths;
+        
+        if (serverPaths.length === 0) {
+          setMessages(p => p.map(m => m.id === botId ? { 
+            ...m, 
+            text: '⚠️ No files were uploaded successfully.', 
+            isStreaming: false 
+          } : m));
+          setIsIndexing(false);
+          return;
+        }
+        
+        setMessages(p => p.map(m => m.id === botId ? { ...m, text: `📤 Uploaded ${serverPaths.length} file(s). Starting indexing...` } : m));
+      } catch (err) {
+        console.error('Upload error:', err);
+        setMessages(p => p.map(m => m.id === botId ? { 
+          ...m, 
+          text: '⚠️ Failed to upload files. The backend may be offline.', 
+          isStreaming: false 
+        } : m));
+        setIsIndexing(false);
+        return;
+      }
+      
+      // Step 2: Index the uploaded files
       try {
         const res = await fetch('http://localhost:8000/index', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paper_paths: filePaths })
+          body: JSON.stringify({ paper_paths: serverPaths })
         });
         
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

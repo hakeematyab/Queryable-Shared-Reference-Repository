@@ -1,9 +1,11 @@
 import json
 import logging
 import threading
+import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from typing import List
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 INDEX_LOCK_PATH = "./data/.index.lock"
 CHECKPOINT_DB = "./data/checkpoints.db"
+UPLOAD_DIR = Path("./uploads")
 
 app_state = {}
 
@@ -118,6 +121,27 @@ async def index_status():
         return {"indexing": False}
     except Timeout:
         return {"indexing": True}
+
+@app.post("/upload")
+async def upload_files(files: List[UploadFile] = File(...)):
+    logger.info(f"[ENDPOINT: /upload] Received {len(files)} files")
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    
+    saved_paths, errors = [], []
+    for file in files:
+        try:
+            safe_filename = f"{uuid.uuid4().hex[:8]}_{file.filename}"
+            file_path = UPLOAD_DIR / safe_filename
+            content = await file.read()
+            with open(file_path, "wb") as f:
+                f.write(content)
+            saved_paths.append(str(file_path.absolute()))
+            logger.info(f"[ENDPOINT: /upload] Saved: {safe_filename}")
+        except Exception as e:
+            logger.error(f"[ENDPOINT: /upload] Failed: {file.filename}: {e}")
+            errors.append({"filename": file.filename, "error": str(e)})
+    
+    return {"saved_paths": saved_paths, "saved_count": len(saved_paths), "errors": errors}
 
 @app.get("/chats/{user_hash}")
 async def get_chats(user_hash: str, limit: int = 10, offset: int = 0):
