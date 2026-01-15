@@ -569,7 +569,7 @@ const QSRRGroundedUI = () => {
                   if (data.failed > 0) {
                     finalText += `\n✗ Failed: ${data.failed} paper(s)`;
                     data.failed_files?.forEach(f => {
-                      finalText += `\n  - ${f.path}: ${f.error}`;
+                      finalText += `\n  - ${f.file}: ${f.error}`;
                     });
                   }
                   setMessages(p => p.map(m => m.id === botId ? { 

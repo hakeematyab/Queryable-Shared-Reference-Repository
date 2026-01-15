@@ -365,7 +365,7 @@ async def index(request: IndexRequest):
                     logger.info(f"[ENDPOINT: /index] Indexed {Path(path).name}: {len(ids)} chunks")
                     yield f'data: {json.dumps({"status": "progress", "current": i+1, "total": len(valid), "file": Path(path).name, "success": True})}\n\n'
                 except Exception as e:
-                    failed.append({"path": path, "error": str(e)})
+                    failed.append({"file": Path(path).name, "error": str(e)})
                     yield f'data: {json.dumps({"status": "progress", "current": i+1, "total": len(valid), "file": Path(path).name, "success": False, "error": str(e)})}\n\n'
             
             with app_state["vector_store_lock"]:

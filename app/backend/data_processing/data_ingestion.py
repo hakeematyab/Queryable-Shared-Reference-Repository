@@ -161,6 +161,7 @@ class DocumentProcessor:
         
         chunk_id = f"{doc_id}_chunk_{chunk_idx:04d}"
         
+        import json
         return {
             "id": chunk_id,
             "text": self.chunker.serialize(chunk),
@@ -169,9 +170,9 @@ class DocumentProcessor:
                 "doc_name": doc_name,
                 "doc_path": doc_path,
                 "chunk_index": chunk_idx,
-                "page_numbers": sorted(list(page_numbers)),
-                "bboxes": bboxes,
-                "headings": headings,
+                "page_numbers": json.dumps(sorted(list(page_numbers))),
+                "bboxes": json.dumps(bboxes),
+                "headings": json.dumps(headings),
                 "raw_text": chunk.text,
             }
         }
