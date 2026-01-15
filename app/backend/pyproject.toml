@@ -21,4 +21,5 @@ dependencies = [
     "torch>=2.0.0",
     "pytest>=8.0.0",
     "minicheck @ git+https://github.com/Liyan06/MiniCheck.git@main",
+    "python-multipart",
 ]
