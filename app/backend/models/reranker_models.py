@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class GTEReranker:
-    def __init__(self, model_id='Alibaba-NLP/gte-multilingual-reranker-base', device="cpu", max_length=2048):
+    def __init__(self, model_id='Alibaba-NLP/gte-multilingual-reranker-base', device="cpu", max_length=512):
         self.model = CrossEncoder(model_id, max_length=max_length, device=device, trust_remote_code=True)
         logger.info(f"Loaded GTE Reranker on {device}")
     
@@ -34,7 +34,7 @@ class MSMarcoReranker:
 
 
 class JinaReranker:
-    def __init__(self, model_id='jinaai/jina-reranker-v2-base-multilingual', device="cpu", max_length=2048):
+    def __init__(self, model_id='jinaai/jina-reranker-v2-base-multilingual', device="cpu", max_length=512):
         self.model = CrossEncoder(
             model_id,
             automodel_args={"torch_dtype": "auto"},

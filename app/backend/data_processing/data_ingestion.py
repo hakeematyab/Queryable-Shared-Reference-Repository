@@ -41,7 +41,7 @@ class DocumentProcessor:
     
     def __init__(
         self,
-        max_tokens: int = 2048,
+        max_tokens: int = 512,
         images_dir: Optional[str] = "./data/images",
         save_images: bool = True,
         image_quality: int = 70,

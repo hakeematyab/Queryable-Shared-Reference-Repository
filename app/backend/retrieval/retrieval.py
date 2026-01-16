@@ -46,7 +46,7 @@ class HybridSearcher:
     def search_sync(
         self,
         query: str,
-        top_k: int = 5,
+        top_k: int = 3,
         initial_k: int = 15,
         use_rerank: bool = True,
         where: Optional[Dict] = None,

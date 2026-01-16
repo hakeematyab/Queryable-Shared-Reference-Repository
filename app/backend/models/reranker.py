@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 import logging
 
-from models.device import get_device_for_reranker
+from models.device import get_device, get_device_for_reranker
 from models.reranker_models import RERANKER_MODELS
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class RerankerModel:
         max_workers: int = 1,
         **model_kwargs
     ):
-        self._device = get_device_for_reranker(preferred=device)
+        self._device = get_device(preferred=device)
         self._model_type = model_type
         
         if model_type not in RERANKER_MODELS:
@@ -32,7 +32,7 @@ class RerankerModel:
         self, 
         query: str, 
         documents: list[str], 
-        top_k: int = 5
+        top_k: int = 3
     ) -> list[tuple[str, float]]:
         return self._model.rerank(query, documents, top_k)
     
@@ -40,7 +40,7 @@ class RerankerModel:
         self, 
         query: str, 
         documents: list[str], 
-        top_k: int = 5
+        top_k: int = 3
     ) -> list[tuple[str, float]]:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(

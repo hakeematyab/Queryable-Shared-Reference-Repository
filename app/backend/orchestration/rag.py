@@ -98,10 +98,9 @@ class RAGPipeline:
         claims = [state["query"]+state["response"]]
         sources = ["\n\n---\n\n".join(state["retrieved_docs"])]
         logger.info(f"[NODE: hallucination_check] Claims: {len(claims)}, Sources length: {len(sources[0])}")
-        hallucination_score = await self.hallucination_detector.detect(claims=claims,
-                                                                      sources=sources)
-        state["hallucination_score"] = hallucination_score
-        logger.info(f"[NODE: hallucination_check] Score: {hallucination_score}")
+        result = await self.hallucination_detector.detect(claims=claims, sources=sources)
+        state["hallucination_score"] = result["decision"]
+        logger.info(f"[NODE: hallucination_check] Score: {result['score']:.3f}, Decision: {result['decision']}")
         return state
 
     def context_management(self, state: dict):
