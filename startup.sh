@@ -30,11 +30,11 @@ get_script_dir() {
 
 SCRIPT_DIR="$(get_script_dir)"
 
-# Auto-launch in screen if not already in one
-if [ -z "${QSRR_IN_SCREEN:-}" ]; then
-    echo "Starting servers in screen session 'qsrr'..."
-    screen -S qsrr -X quit 2>/dev/null || true  # Kill existing session
-    exec screen -S qsrr bash -c "QSRR_IN_SCREEN=1 '$SCRIPT_DIR/startup.sh' $*; exec bash"
+# Auto-launch in tmux if not already in one
+if [ -z "${QSRR_IN_TMUX:-}" ]; then
+    echo "Starting servers in tmux session 'qsrr'..."
+    tmux kill-session -t qsrr 2>/dev/null || true
+    exec tmux new-session -s qsrr "QSRR_IN_TMUX=1 '$SCRIPT_DIR/startup.sh' $*; exec bash"
 fi
 
 # Run setup first
