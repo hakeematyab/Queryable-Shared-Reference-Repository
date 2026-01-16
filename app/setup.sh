@@ -66,7 +66,7 @@ echo "✓ ollama available"
 echo
 
 # Backend dependencies
-cd "$SCRIPT_DIR/app/backend"
+cd "$SCRIPT_DIR/backend"
 if [ ! -d ".venv" ]; then
     echo "Setting up backend dependencies..."
     uv sync
@@ -89,7 +89,7 @@ else
 fi
 
 # Frontend dependencies
-cd "$SCRIPT_DIR/app/frontend"
+cd "$SCRIPT_DIR/frontend"
 if [ ! -d "node_modules" ]; then
     echo "Setting up frontend dependencies..."
     npm install

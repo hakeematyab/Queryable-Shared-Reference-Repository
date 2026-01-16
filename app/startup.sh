@@ -80,7 +80,7 @@ if [ "$MODE" = "prod" ]; then
     echo "  - Frontend: 0.0.0.0:3000 (static build)"
     echo
 
-    cd "$SCRIPT_DIR/app/frontend"
+    cd "$SCRIPT_DIR/frontend"
     if [ ! -d "build" ]; then
         echo "Building frontend..."
         npm run build
@@ -88,11 +88,11 @@ if [ "$MODE" = "prod" ]; then
         echo "Frontend build exists. Delete /build folder to rebuild."
     fi
 
-    cd "$SCRIPT_DIR/app/backend"
+    cd "$SCRIPT_DIR/backend"
     uv run uvicorn app:app --host 0.0.0.0 --port 8000 --workers "$WORKERS" &
     BACKEND_PID=$!
 
-    cd "$SCRIPT_DIR/app/frontend"
+    cd "$SCRIPT_DIR/frontend"
     npx serve -s build -l 3000 &
     FRONTEND_PID=$!
 else
@@ -102,11 +102,11 @@ else
     echo "  - Frontend: http://localhost:3000 (hot reload)"
     echo
 
-    cd "$SCRIPT_DIR/app/backend"
+    cd "$SCRIPT_DIR/backend"
     uv run uvicorn app:app --reload --host 0.0.0.0 --port 8000 &
     BACKEND_PID=$!
 
-    cd "$SCRIPT_DIR/app/frontend"
+    cd "$SCRIPT_DIR/frontend"
     CI=true npm start &
     FRONTEND_PID=$!
 fi
