@@ -55,7 +55,6 @@ class RAGPipeline:
         messages.append(HumanMessage(content=state["query"]))
         state["current_turn"].append(HumanMessage(content=state["query"]))
         
-        # Use astream with combined modes: messages for tokens, values for tool results
         async for stream_mode, event in self.agent_executor.astream(
             {"messages": messages}, 
             stream_mode=["messages", "values"],
@@ -97,8 +96,8 @@ class RAGPipeline:
     async def hallucination_check(self, state: dict):
         logger.info("[NODE: hallucination_check] Starting hallucination detection")
         claims = [state["query"]+state["response"]]
-        sources = "\n\n---\n\n".join(state["retrieved_docs"])
-        logger.info(f"[NODE: hallucination_check] Claims: {len(claims)}, Sources length: {len(sources)}")
+        sources = ["\n\n---\n\n".join(state["retrieved_docs"])]
+        logger.info(f"[NODE: hallucination_check] Claims: {len(claims)}, Sources length: {len(sources[0])}")
         hallucination_score = await self.hallucination_detector.detect(claims=claims,
                                                                       sources=sources)
         state["hallucination_score"] = hallucination_score
@@ -116,7 +115,6 @@ class RAGPipeline:
         
         state["full_history"].extend(state.get("current_turn", []))
         
-        # Append per-turn metadata (empty if no retrieval)
         state["citations_history"].append(state.get("citations", []) or [])
         state["hallucination_scores"].append(state.get("hallucination_score"))
         
@@ -132,7 +130,6 @@ class RAGPipeline:
 
 
 def get_rag_graph(system_prompt, llm, tools, hallucination_detector, checkpointer=None):    
-    # Patterns indicating the model couldn't answer (condensed from common non-answer templates)
     DATA_VALID_DENIAL_RESPONSE = "Your query is too long. Please shorten it and try again."
     
     NON_ANSWER_PATTERN = re.compile(
