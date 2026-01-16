@@ -74,6 +74,11 @@ else
     echo "✓ Backend dependencies already installed"
 fi
 
+# Download NLTK data
+echo "Ensuring NLTK data is available..."
+uv run python -c "import nltk; nltk.download('punkt_tab', quiet=True)"
+echo "✓ NLTK data ready"
+
 # HuggingFace login (needed for gated models)
 if [ ! -f "$HOME/.cache/huggingface/token" ]; then
     echo
