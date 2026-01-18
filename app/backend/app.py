@@ -268,6 +268,7 @@ async def chat(request: ChatRequest):
     async def generate():
         is_streaming = False
         start_time = time.time()
+        first_token_time = None
         
         try:
             state = {"query": request.user_query}
@@ -308,6 +309,11 @@ async def chat(request: ChatRequest):
                     if chunk and hasattr(chunk, "content") and chunk.content:
                         if hasattr(chunk, "tool_calls") and chunk.tool_calls:
                             continue
+                        # Track time to first token
+                        if first_token_time is None:
+                            first_token_time = time.time()
+                            ttft = first_token_time - start_time
+                            logger.info(f"[TTFT] /chat thread_id={request.thread_id} | {ttft:.2f}s")
                         yield f'data: {json.dumps({"done": False, "token": chunk.content})}\n\n'
             
             final_state = await app_state["graph"].aget_state(config)
@@ -317,7 +323,8 @@ async def chat(request: ChatRequest):
             hallucination_score = state_values.get("hallucination_score")
             
             elapsed_time = time.time() - start_time
-            logger.info(f"[RESPONSE_TIME] /chat thread_id={request.thread_id} | {elapsed_time:.2f}s")
+            ttft_str = f"{first_token_time - start_time:.2f}s" if first_token_time else "N/A"
+            logger.info(f"[RESPONSE_TIME] /chat thread_id={request.thread_id} | TTFT={ttft_str} Total={elapsed_time:.2f}s")
             logger.info(f"[ENDPOINT: /chat] Complete. Citations: {len(citations)}, Hallucination score: {hallucination_score}")
             yield f'data: {json.dumps({"done": True, "citations": citations, "hallucination_score": hallucination_score})}\n\n'
             

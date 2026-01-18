@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { flushSync } from 'react-dom';
 import { Send, User, Loader2, LogIn, Plus, MessageSquare, MoreHorizontal, FileText, X, Copy, Check, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -151,7 +152,7 @@ const LoadingIndicator = memo(() => {
 });
 
 // Response time display component (memoized)
-const ResponseTimer = memo(({ isStreaming, startTime, finalTime }) => {
+const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime }) => {
   const [elapsed, setElapsed] = useState(0);
   
   useEffect(() => {
@@ -169,19 +170,47 @@ const ResponseTimer = memo(({ isStreaming, startTime, finalTime }) => {
   // Show nothing if no timing info
   if (!startTime && finalTime === undefined) return null;
   
-  const displayTime = finalTime !== undefined ? finalTime : elapsed;
-  const formattedTime = displayTime < 60 
-    ? `${displayTime.toFixed(1)}s` 
-    : `${Math.floor(displayTime / 60)}m ${(displayTime % 60).toFixed(0)}s`;
+  const formatTime = (seconds) => {
+    if (seconds < 60) return `${seconds.toFixed(1)}s`;
+    return `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(0)}s`;
+  };
   
+  // Calculate TTFT if first token has arrived
+  const ttft = firstTokenTime && startTime ? (firstTokenTime - startTime) / 1000 : null;
+  const displayTime = finalTime !== undefined ? finalTime : elapsed;
+  
+  // If completed, show both TTFT and total
+  if (!isStreaming && finalTime !== undefined) {
+    return (
+      <div className="inline-flex items-center gap-3 text-xs">
+        {ttft !== null && (
+          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="font-medium">TTFT:</span>
+            <span className="font-mono">{formatTime(ttft)}</span>
+          </div>
+        )}
+        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-700/50 text-slate-400">
+          <Clock size={12} />
+          <span className="font-medium">Total:</span>
+          <span className="font-mono">{formatTime(finalTime)}</span>
+        </div>
+      </div>
+    );
+  }
+  
+  // While streaming: show TTFT if available, and elapsed time
   return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${
-      isStreaming 
-        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-        : 'bg-slate-700/50 text-slate-400'
-    }`}>
-      <Clock size={12} className={isStreaming ? 'animate-pulse' : ''} />
-      <span className="font-mono">{formattedTime}</span>
+    <div className="inline-flex items-center gap-3 text-xs">
+      {ttft !== null && (
+        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="font-medium">TTFT:</span>
+          <span className="font-mono">{formatTime(ttft)}</span>
+        </div>
+      )}
+      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        <Clock size={12} className="animate-pulse" />
+        <span className="font-mono">{formatTime(displayTime)}</span>
+      </div>
     </div>
   );
 });
@@ -381,6 +410,7 @@ const QSRRGroundedUI = () => {
   const [isIndexing, setIsIndexing] = useState(false);
   const chatRef = useRef(null);
   const [responseStartTimes, setResponseStartTimes] = useState({});  // messageId -> start timestamp
+  const [responseFirstTokenTimes, setResponseFirstTokenTimes] = useState({});  // messageId -> first token timestamp
   const [responseFinalTimes, setResponseFinalTimes] = useState({});  // messageId -> final elapsed time in seconds
 
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
@@ -459,6 +489,7 @@ const QSRRGroundedUI = () => {
     setActiveChat(chat);
     setChatId(chat.thread_id);
     setResponseStartTimes({});
+    setResponseFirstTokenTimes({});
     setResponseFinalTimes({});
     await fetchChatHistory(chat.thread_id);
   };
@@ -469,6 +500,7 @@ const QSRRGroundedUI = () => {
     setMessages([]);
     setPendingFiles([]);
     setResponseStartTimes({});
+    setResponseFirstTokenTimes({});
     setResponseFinalTimes({});
   };
 
@@ -686,7 +718,17 @@ const QSRRGroundedUI = () => {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.error) { setMessages(p => p.map(m => m.id === botId ? { ...m, text: '⚠️ Error occurred. Please try again.', isStreaming: false } : m)); setIsStreaming(false); return; }
-              if (data.token) { accText += data.token; setMessages(p => p.map(m => m.id === botId ? { ...m, text: accText } : m)); }
+              if (data.token) { 
+                // Track first token time
+                if (!responseFirstTokenTimes[botId]) {
+                  setResponseFirstTokenTimes(prev => ({ ...prev, [botId]: Date.now() }));
+                }
+                accText += data.token; 
+                // Force immediate render for smooth streaming
+                flushSync(() => {
+                  setMessages(p => p.map(m => m.id === botId ? { ...m, text: accText } : m)); 
+                });
+              }
               if (data.done) {
                 citations = data.citations || [];
                 hallucinationScore = data.hallucination_score ?? null;
@@ -807,6 +849,7 @@ const QSRRGroundedUI = () => {
                       <ResponseTimer 
                         isStreaming={msg.isStreaming} 
                         startTime={responseStartTimes[msg.id]} 
+                        firstTokenTime={responseFirstTokenTimes[msg.id]}
                         finalTime={responseFinalTimes[msg.id]}
                       />
                     </div>
