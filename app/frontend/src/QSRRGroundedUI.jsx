@@ -719,7 +719,7 @@ const QSRRGroundedUI = () => {
                 <div className={`flex flex-col flex-1 min-w-0 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`relative rounded-2xl px-4 py-3 backdrop-blur-xl shadow-xl max-w-full overflow-hidden ${msg.type === 'user' ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : 'bg-slate-800/80 border border-slate-700/50 text-slate-100'}`}>
                     {msg.type === 'user' ? (
-                      <p className="text-sm leading-relaxed pr-8">{msg.text}</p>
+                      <p className="text-sm leading-relaxed pr-8 break-all">{msg.text}</p>
                     ) : msg.isStreaming ? (
                       <LoadingIndicator />
                     ) : (
