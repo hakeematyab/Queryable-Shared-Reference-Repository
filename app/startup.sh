@@ -5,6 +5,7 @@ MODE="dev"
 WORKERS=4
 OLLAMA_MODEL="qwen3:8b"
 OLLAMA_HOST="127.0.0.1:11434"
+OLLAMA_NUM_PARALLEL=4  # Max concurrent requests per model
 
 # Source nvm to ensure npm is available
 export NVM_DIR="$HOME/.nvm"
@@ -49,8 +50,8 @@ echo
 
 # Start Ollama if not running
 if ! pgrep -x "ollama" > /dev/null; then
-    echo "Starting Ollama server on $OLLAMA_HOST..."
-    OLLAMA_HOST="$OLLAMA_HOST" ollama serve &
+    echo "Starting Ollama server on $OLLAMA_HOST (parallel=$OLLAMA_NUM_PARALLEL)..."
+    OLLAMA_HOST="$OLLAMA_HOST" OLLAMA_NUM_PARALLEL="$OLLAMA_NUM_PARALLEL" ollama serve &
     OLLAMA_PID=$!
     sleep 3
 else
