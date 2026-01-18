@@ -48,16 +48,17 @@ echo "  Starting servers (Mode: $MODE)"
 echo "============================================================"
 echo
 
-# Start Ollama if not running
-if ! pgrep -x "ollama" > /dev/null; then
-    echo "Starting Ollama server on $OLLAMA_HOST (parallel=$OLLAMA_NUM_PARALLEL)..."
-    OLLAMA_HOST="$OLLAMA_HOST" OLLAMA_NUM_PARALLEL="$OLLAMA_NUM_PARALLEL" ollama serve &
-    OLLAMA_PID=$!
-    sleep 3
-else
-    echo "✓ Ollama server already running"
-    OLLAMA_PID=""
+# Start Ollama (restart if already running to apply OLLAMA_NUM_PARALLEL)
+if pgrep -x "ollama" > /dev/null; then
+    echo "Ollama already running - restarting to apply parallel=$OLLAMA_NUM_PARALLEL..."
+    pkill -x "ollama"
+    sleep 2
 fi
+
+echo "Starting Ollama server on $OLLAMA_HOST (parallel=$OLLAMA_NUM_PARALLEL)..."
+OLLAMA_HOST="$OLLAMA_HOST" OLLAMA_NUM_PARALLEL="$OLLAMA_NUM_PARALLEL" ollama serve &
+OLLAMA_PID=$!
+sleep 3
 
 # Pull model
 echo "Ensuring Ollama model $OLLAMA_MODEL is available..."
