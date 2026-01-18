@@ -2,7 +2,7 @@
 # Usage:
 #   ./profile.sh                      # Start profiler (launches in tmux)
 #   tmux attach -t qsrr-profiler      # Attach to running profiler
-#   tmux kill-session -t qsrr-profiler # Kill profiler
+#   tmux kill-session -t profiler-qsrr # Kill profiler
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="$SCRIPT_DIR/data/profiles"
