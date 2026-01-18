@@ -781,11 +781,11 @@ const QSRRGroundedUI = () => {
               <p className="text-xs text-slate-500 mt-2">Papers will be indexed when you send your message</p>
             </div>
           )}
-          <div className="flex gap-3 max-w-3xl mx-auto">
+          <div className="flex gap-3 max-w-3xl mx-auto items-end">
             <div className="relative">
               <button
                 onClick={() => setShowAddPanel(!showAddPanel)}
-                className={`h-full px-4 py-4 bg-slate-800/80 border border-slate-700/50 rounded-2xl hover:bg-slate-700/80 transition-all ${pendingFiles.length > 0 ? 'text-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-4 py-4 bg-slate-800/80 border border-slate-700/50 rounded-2xl hover:bg-slate-700/80 transition-all ${pendingFiles.length > 0 ? 'text-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
               >
                 <Plus size={18} />
               </button>
@@ -802,14 +802,16 @@ const QSRRGroundedUI = () => {
               }}
               onInput={(e) => {
                 e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                const maxHeight = 150;
+                e.target.style.height = Math.min(e.target.scrollHeight, maxHeight) + 'px';
+                e.target.style.overflowY = e.target.scrollHeight > maxHeight ? 'auto' : 'hidden';
               }}
               placeholder={isIndexing ? "Indexing papers..." : pendingFiles.length > 0 ? "Press Enter to index papers..." : isStreaming ? "Generating response..." : "Ask about your research papers..."}
               disabled={isStreaming || isIndexing || pendingFiles.length > 0}
               rows={1}
               className="flex-1 px-5 py-4 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 text-base shadow-xl disabled:opacity-50 resize-none overflow-hidden"
             />
-            <button onClick={sendMessage} disabled={(pendingFiles.length === 0 && !input.trim()) || isStreaming || isIndexing} className="px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-2xl hover:from-blue-600 hover:to-purple-600 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed transition-all flex items-center shadow-xl hover:shadow-blue-500/25">
+            <button onClick={sendMessage} disabled={(pendingFiles.length === 0 && !input.trim()) || isStreaming || isIndexing} className="px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-2xl hover:from-blue-600 hover:to-purple-600 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed transition-all flex items-center shadow-xl hover:shadow-blue-500/25 self-end">
               {isIndexing ? <Loader2 size={18} className="animate-spin" /> : isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
           </div>
