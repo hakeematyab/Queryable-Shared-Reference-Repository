@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def suppress_output():
-    """Suppress stdout/stderr during noisy operations."""
     with open(os.devnull, 'w') as null:
         old_stdout, old_stderr = sys.stdout, sys.stderr
         sys.stdout, sys.stderr = null, null

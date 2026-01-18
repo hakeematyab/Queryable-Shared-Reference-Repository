@@ -18,9 +18,13 @@ from retrieval.vector_store import VectorStore
 from retrieval.retrieval import HybridSearcher
 from data_processing.data_ingestion import DocumentProcessor
 from orchestration.llm import OllamaClient
+from utils.logging_config import setup_session_logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+session_log_path = setup_session_logging(user_id="server")
+logger.info(f"Session log file: {session_log_path}")
 
 INDEX_LOCK_PATH = "./data/.index.lock"
 CHECKPOINT_DB = "./data/checkpoints.db"
@@ -262,19 +266,12 @@ async def chat(request: ChatRequest):
     logger.info(f"[ENDPOINT: /chat] Thread: {request.thread_id}, Query: {request.user_query[:100]}..." if len(request.user_query) > 100 else f"[ENDPOINT: /chat] Thread: {request.thread_id}, Query: {request.user_query}")
     async def generate():
         is_streaming = False
-        log_file = Path("./data/chat_events.log")
         
         try:
             state = {"query": request.user_query}
             config = {"configurable": {"thread_id": request.thread_id}}
             
-            with open(log_file, "w", encoding="utf-8") as f:
-                f.write(f"=== Chat Request: {request.user_query} ===\n\n")
-            
             async for event in app_state["graph"].astream_events(state, config, version="v2"):
-                with open(log_file, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(event, indent=2, default=str) + "\n")
-                    f.write("-" * 80 + "\n")
                 
                 event_type = event.get("event")
                 metadata = event.get("metadata", {})

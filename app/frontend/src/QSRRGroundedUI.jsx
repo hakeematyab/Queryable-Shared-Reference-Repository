@@ -80,7 +80,7 @@ const MarkdownRenderer = memo(({ content }) => {
   if (!content) return null;
   
   return (
-    <div className="markdown-content">
+    <div className="markdown-content break-words">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}

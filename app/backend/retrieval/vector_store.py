@@ -147,7 +147,7 @@ class BM25Store:
         self,
         query: str,
         k: int = 10,
-        filter_fn=None,  # Optional: lambda metadata -> bool
+        filter_fn=None,
     ) -> List[Dict]:
         if self.retriever is None or not self.corpus:
             return []
