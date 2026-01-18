@@ -156,15 +156,15 @@ const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime 
   const [elapsed, setElapsed] = useState(0);
   
   useEffect(() => {
-    if (!isStreaming || !startTime) {
-      return;
+    if (!startTime) return;
+    
+    // Keep timer running while streaming
+    if (isStreaming) {
+      const interval = setInterval(() => {
+        setElapsed((Date.now() - startTime) / 1000);
+      }, 100);
+      return () => clearInterval(interval);
     }
-    
-    const interval = setInterval(() => {
-      setElapsed((Date.now() - startTime) / 1000);
-    }, 100);
-    
-    return () => clearInterval(interval);
   }, [isStreaming, startTime]);
   
   // Show nothing if no timing info
@@ -175,40 +175,24 @@ const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime 
     return `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(0)}s`;
   };
   
-  // Calculate TTFT if first token has arrived
-  const ttft = firstTokenTime && startTime ? (firstTokenTime - startTime) / 1000 : null;
+  // Calculate start time (time to first token) if first token has arrived
+  const startedAt = firstTokenTime && startTime ? (firstTokenTime - startTime) / 1000 : null;
   const displayTime = finalTime !== undefined ? finalTime : elapsed;
   
-  // If completed, show both TTFT and total
-  if (!isStreaming && finalTime !== undefined) {
-    return (
-      <div className="inline-flex items-center gap-3 text-xs">
-        {ttft !== null && (
-          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="font-medium">TTFT:</span>
-            <span className="font-mono">{formatTime(ttft)}</span>
-          </div>
-        )}
-        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-700/50 text-slate-400">
-          <Clock size={12} />
-          <span className="font-medium">Total:</span>
-          <span className="font-mono">{formatTime(finalTime)}</span>
-        </div>
-      </div>
-    );
-  }
-  
-  // While streaming: show TTFT if available, and elapsed time
   return (
     <div className="inline-flex items-center gap-3 text-xs">
-      {ttft !== null && (
+      {startedAt !== null && (
         <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span className="font-medium">TTFT:</span>
-          <span className="font-mono">{formatTime(ttft)}</span>
+          <span className="font-medium">Start:</span>
+          <span className="font-mono">{formatTime(startedAt)}</span>
         </div>
       )}
-      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-        <Clock size={12} className="animate-pulse" />
+      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg ${
+        isStreaming 
+          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+          : 'bg-slate-700/50 text-slate-400'
+      }`}>
+        <Clock size={12} className={isStreaming ? 'animate-pulse' : ''} />
         <span className="font-mono">{formatTime(displayTime)}</span>
       </div>
     </div>
@@ -810,7 +794,7 @@ const QSRRGroundedUI = () => {
                   <div className={`relative rounded-2xl px-4 py-3 backdrop-blur-xl shadow-xl max-w-full overflow-hidden ${msg.type === 'user' ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : 'bg-slate-800/80 border border-slate-700/50 text-slate-100'}`}>
                     {msg.type === 'user' ? (
                       <p className="text-sm leading-relaxed pr-8 break-all">{msg.text}</p>
-                    ) : msg.isStreaming ? (
+                    ) : msg.isStreaming && !msg.text ? (
                       <LoadingIndicator />
                     ) : (
                       <div className="text-sm leading-relaxed pr-8"><MarkdownRenderer content={msg.text} /></div>
