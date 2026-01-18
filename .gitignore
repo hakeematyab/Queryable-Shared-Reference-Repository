@@ -37,6 +37,7 @@ logs/
 app/data
 app/backend/data
 app/backend/data
+scratch
 
 # Node
 node_modules/

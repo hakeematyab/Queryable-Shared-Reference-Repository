@@ -764,7 +764,13 @@ const QSRRGroundedUI = () => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-slate-100">QSRR</h1>
-                <p className="text-xs text-slate-400">Queryable Shared Reference Repository</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-slate-400">Queryable Shared Reference Repository</p>
+                  <span className="text-slate-600">|</span>
+                  <a href="https://docs.google.com/document/d/1NGxwo0Y7omL8l5CzoagF5TillOJ56HAoK3G2ERpMyB0/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Feedback Guide</a>
+                  <a href="https://forms.gle/pfhujEcMqwkgJVJy7" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">System Annotation</a>
+                  <a href="https://forms.gle/ikr7WfaZk5ZE1hku5" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Report Bug/Feature</a>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 rounded-full border border-slate-700/50">
