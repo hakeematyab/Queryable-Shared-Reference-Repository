@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+import time
 import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -266,6 +267,7 @@ async def chat(request: ChatRequest):
     logger.info(f"[ENDPOINT: /chat] Thread: {request.thread_id}, Query: {request.user_query[:100]}..." if len(request.user_query) > 100 else f"[ENDPOINT: /chat] Thread: {request.thread_id}, Query: {request.user_query}")
     async def generate():
         is_streaming = False
+        start_time = time.time()
         
         try:
             state = {"query": request.user_query}
@@ -314,11 +316,14 @@ async def chat(request: ChatRequest):
             citations = state_values.get("citations", []) or []
             hallucination_score = state_values.get("hallucination_score")
             
+            elapsed_time = time.time() - start_time
+            logger.info(f"[RESPONSE_TIME] /chat thread_id={request.thread_id} | {elapsed_time:.2f}s")
             logger.info(f"[ENDPOINT: /chat] Complete. Citations: {len(citations)}, Hallucination score: {hallucination_score}")
             yield f'data: {json.dumps({"done": True, "citations": citations, "hallucination_score": hallucination_score})}\n\n'
             
         except Exception as e:
-            logger.error("Chat error for thread %s: %s", request.thread_id, e)
+            elapsed_time = time.time() - start_time
+            logger.error(f"[RESPONSE_TIME] /chat thread_id={request.thread_id} ERROR | {elapsed_time:.2f}s - {str(e)}")
             yield f'data: {json.dumps({"error": str(e)})}\n\n'
     
     return StreamingResponse(
@@ -338,9 +343,11 @@ async def index(request: IndexRequest):
     lock = FileLock(INDEX_LOCK_PATH, timeout=0)
     
     async def stream_progress():
+        start_time = time.time()
         try:
             lock.acquire()
         except Timeout:
+            logger.warning(f"[RESPONSE_TIME] /index BLOCKED - lock acquisition failed")
             yield f'data: {json.dumps({"status": "error", "error": "Another indexing operation is in progress. Please wait."})}\n\n'
             return
         
@@ -368,6 +375,8 @@ async def index(request: IndexRequest):
             with app_state["vector_store_lock"]:
                 app_state["vector_store"].save()
             
+            elapsed_time = time.time() - start_time
+            logger.info(f"[RESPONSE_TIME] /index files={len(valid)} indexed={len(indexed)} failed={len(failed)} | {elapsed_time:.2f}s")
             logger.info(f"[ENDPOINT: /index] Complete. Indexed: {len(indexed)}, Failed: {len(failed)}")
             yield f'data: {json.dumps({"status": "done", "indexed": len(indexed), "failed": len(failed), "failed_files": failed})}\n\n'
         finally:
