@@ -13,11 +13,11 @@ LOG_FILE="$LOG_DIR/profile_$TIMESTAMP.log"
 
 # Auto-launch in tmux if not already in one
 if [ -z "${QSRR_PROFILER:-}" ]; then
-    echo "Starting profiler in tmux session 'qsrr-profiler'..."
-    tmux kill-session -t qsrr-profiler 2>/dev/null || true
+    echo "Starting profiler in tmux session 'profiler-qsrr'..."
+    tmux kill-session -t profiler-qsrr 2>/dev/null || true
     # Start detached, then attach - this makes the session independent
-    tmux new-session -d -s qsrr-profiler "QSRR_PROFILER=1 bash '$0'"
-    exec tmux attach -t qsrr-profiler
+    tmux new-session -d -s profiler-qsrr "QSRR_PROFILER=1 bash '$0'"
+    exec tmux attach -t profiler-qsrr
 fi
 
 echo "╔══════════════════════════════════════════════════════════════╗"
