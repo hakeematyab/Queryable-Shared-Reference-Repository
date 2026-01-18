@@ -69,12 +69,29 @@ while true; do
     OLLAMA_MEM=$(get_process_mem "ollama")
     PYTHON_MEM=$(get_process_mem "uvicorn|python.*app")
     NODE_MEM=$(get_process_mem "node|npm")
-    TOTAL_APP=$(echo "$OLLAMA_MEM + $PYTHON_MEM + $NODE_MEM" | bc 2>/dev/null || echo "0")
+    
+    OLLAMA_MEM=${OLLAMA_MEM:-0}
+    PYTHON_MEM=${PYTHON_MEM:-0}
+    NODE_MEM=${NODE_MEM:-0}
+    
+    TOTAL_APP=$(echo "$OLLAMA_MEM + $PYTHON_MEM + $NODE_MEM" | bc 2>/dev/null) || TOTAL_APP="0"
+    TOTAL_APP=${TOTAL_APP:-0}
+    
     MEM_FREE=$(get_memory_free)
+    MEM_FREE=${MEM_FREE:-unknown}
     
     OLLAMA_MODEL_MEM=$(get_ollama_model_mem)
+    OLLAMA_MODEL_MEM=${OLLAMA_MODEL_MEM:-0}
+    
     TOTAL_MEM_GB=$(get_total_memory_gb)
-    USAGE_PCT=$(echo "scale=1; $TOTAL_APP / ($TOTAL_MEM_GB * 1024) * 100" | bc 2>/dev/null || echo "?")
+    TOTAL_MEM_GB=${TOTAL_MEM_GB:-1}
+    
+    if [ "$TOTAL_MEM_GB" != "0" ] && [ "$TOTAL_MEM_GB" != "?" ]; then
+        USAGE_PCT=$(echo "scale=1; $TOTAL_APP / ($TOTAL_MEM_GB * 1024) * 100" | bc 2>/dev/null) || USAGE_PCT="?"
+    else
+        USAGE_PCT="?"
+    fi
+    USAGE_PCT=${USAGE_PCT:-?}
     
     LOG_LINE="$TIMESTAMP | $QSRR_STATUS | $OLLAMA_MEM | $PYTHON_MEM | $NODE_MEM | $TOTAL_APP | $MEM_FREE"
     
