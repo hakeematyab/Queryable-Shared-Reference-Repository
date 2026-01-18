@@ -180,21 +180,19 @@ const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime 
   const displayTime = finalTime !== undefined ? finalTime : elapsed;
   
   return (
-    <div className="inline-flex items-center gap-3 text-xs">
+    <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs ${
+      isStreaming 
+        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+        : 'bg-slate-700/50 text-slate-400'
+    }`}>
       {startedAt !== null && (
-        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span className="font-medium">Start:</span>
-          <span className="font-mono">{formatTime(startedAt)}</span>
-        </div>
+        <>
+          <span className="text-emerald-400 font-medium">Start: <span className="font-mono">{formatTime(startedAt)}</span></span>
+          <span className="text-slate-500">|</span>
+        </>
       )}
-      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg ${
-        isStreaming 
-          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-          : 'bg-slate-700/50 text-slate-400'
-      }`}>
-        <Clock size={12} className={isStreaming ? 'animate-pulse' : ''} />
-        <span className="font-mono">{formatTime(displayTime)}</span>
-      </div>
+      <Clock size={12} className={isStreaming ? 'animate-pulse' : ''} />
+      <span className="font-mono">{formatTime(displayTime)}</span>
     </div>
   );
 });
