@@ -21,7 +21,7 @@ from data_processing.data_ingestion import DocumentProcessor
 from orchestration.llm import OllamaClient
 from utils.logging_config import setup_session_logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 session_log_path = setup_session_logging(user_id="server")
