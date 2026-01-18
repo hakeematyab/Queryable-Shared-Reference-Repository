@@ -15,7 +15,7 @@ LOG_FILE="$LOG_DIR/profile_$TIMESTAMP.log"
 if [ -z "${QSRR_PROFILER:-}" ]; then
     echo "Starting profiler in tmux session 'qsrr-profiler'..."
     tmux kill-session -t qsrr-profiler 2>/dev/null || true
-    exec tmux new-session -s qsrr-profiler "QSRR_PROFILER=1 '$0'; exec bash"
+    exec tmux new-session -s qsrr-profiler "QSRR_PROFILER=1 '$0'; $SHELL"
 fi
 
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -30,7 +30,7 @@ echo ""
 {
     echo "# QSRR Resource Profile"
     echo "# Started: $(date)"
-    echo "# Format: timestamp | qsrr_status | ollama_mem_mb | python_mem_mb | node_mem_mb | total_app_mb | system_pressure"
+    echo "# Format: timestamp | qsrr_status | ollama_mem_mb | python_mem_mb | node_mem_mb | total_app_mb | system_free"
     echo "#"
 } > "$LOG_FILE"
 
