@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+
+# Data (optional - uncomment if you don't want to track)
+app/data
+app/backend/data
+app/backend/data
+
+# Node
+node_modules/
+
+# Build outputs
+app/frontend/build/
+
+# Profile logs
+app/data/profiles/

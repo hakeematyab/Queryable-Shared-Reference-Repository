@@ -29,7 +29,7 @@ logger.info(f"Session log file: {session_log_path}")
 
 INDEX_LOCK_PATH = "./data/.index.lock"
 CHECKPOINT_DB = "./data/checkpoints.db"
-UPLOAD_DIR = Path("./uploads")
+UPLOAD_DIR = Path("./data/uploads")
 
 app_state = {}
 
