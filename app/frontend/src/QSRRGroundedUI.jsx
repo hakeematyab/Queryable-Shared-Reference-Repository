@@ -152,22 +152,23 @@ const LoadingIndicator = memo(() => {
 });
 
 // Response time display component (memoized)
+// Shows: "Start: X.Xs" (static time-to-first-token) | Clock icon + total elapsed time (running timer)
 const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime }) => {
   const [elapsed, setElapsed] = useState(0);
   
   useEffect(() => {
     if (!startTime) return;
     
-    // Keep timer running while streaming
-    if (isStreaming) {
+    // Only run timer while streaming AND we don't have a final time yet
+    if (isStreaming && finalTime === undefined) {
       const interval = setInterval(() => {
         setElapsed((Date.now() - startTime) / 1000);
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [isStreaming, startTime]);
+  }, [isStreaming, startTime, finalTime]);
   
-  // Show nothing if no timing info
+  // Show nothing if no timing info at all
   if (!startTime && finalTime === undefined) return null;
   
   const formatTime = (seconds) => {
@@ -175,8 +176,10 @@ const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime 
     return `${Math.floor(seconds / 60)}m ${(seconds % 60).toFixed(0)}s`;
   };
   
-  // Calculate start time (time to first token) if first token has arrived
-  const startedAt = firstTokenTime && startTime ? (firstTokenTime - startTime) / 1000 : null;
+  // "Start" = static time-to-first-token (only shown after first token arrives)
+  const timeToFirstToken = firstTokenTime && startTime ? (firstTokenTime - startTime) / 1000 : null;
+  
+  // Total elapsed time: use finalTime if done, otherwise use running elapsed
   const displayTime = finalTime !== undefined ? finalTime : elapsed;
   
   return (
@@ -185,9 +188,9 @@ const ResponseTimer = memo(({ isStreaming, startTime, firstTokenTime, finalTime 
         ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
         : 'bg-slate-700/50 text-slate-400'
     }`}>
-      {startedAt !== null && (
+      {timeToFirstToken !== null && (
         <>
-          <span className="text-emerald-400 font-medium">Start: <span className="font-mono">{formatTime(startedAt)}</span></span>
+          <span className="text-emerald-400 font-medium">Start: <span className="font-mono">{formatTime(timeToFirstToken)}</span></span>
           <span className="text-slate-500">|</span>
         </>
       )}
@@ -690,6 +693,7 @@ const QSRRGroundedUI = () => {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accText = '', citations = [], hallucinationScore = null;
+      let hasRecordedFirstToken = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -701,8 +705,9 @@ const QSRRGroundedUI = () => {
               const data = JSON.parse(line.slice(6));
               if (data.error) { setMessages(p => p.map(m => m.id === botId ? { ...m, text: '⚠️ Error occurred. Please try again.', isStreaming: false } : m)); setIsStreaming(false); return; }
               if (data.token) { 
-                // Track first token time
-                if (!responseFirstTokenTimes[botId]) {
+                // Track first token time (use local var to avoid stale closure issue)
+                if (!hasRecordedFirstToken) {
+                  hasRecordedFirstToken = true;
                   setResponseFirstTokenTimes(prev => ({ ...prev, [botId]: Date.now() }));
                 }
                 accText += data.token; 
