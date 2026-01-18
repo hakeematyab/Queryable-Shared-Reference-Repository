@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# Capture original arguments before any shifting
+ORIGINAL_ARGS="$*"
+
 MODE="dev"
 WORKERS=4
 OLLAMA_MODEL="qwen3:8b"
@@ -35,7 +38,7 @@ SCRIPT_DIR="$(get_script_dir)"
 if [ -z "${QSRR_IN_TMUX:-}" ]; then
     echo "Starting servers in tmux session 'qsrr'..."
     tmux kill-session -t qsrr 2>/dev/null || true
-    exec tmux new-session -s qsrr "QSRR_IN_TMUX=1 '$SCRIPT_DIR/startup.sh' $*; exec bash"
+    exec tmux new-session -s qsrr "QSRR_IN_TMUX=1 '$SCRIPT_DIR/startup.sh' $ORIGINAL_ARGS; $SHELL"
 fi
 
 # Run setup first

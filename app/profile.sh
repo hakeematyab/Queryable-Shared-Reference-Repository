@@ -15,7 +15,9 @@ LOG_FILE="$LOG_DIR/profile_$TIMESTAMP.log"
 if [ -z "${QSRR_PROFILER:-}" ]; then
     echo "Starting profiler in tmux session 'qsrr-profiler'..."
     tmux kill-session -t qsrr-profiler 2>/dev/null || true
-    exec tmux new-session -s qsrr-profiler "QSRR_PROFILER=1 '$0'; $SHELL"
+    # Start detached, then attach - this makes the session independent
+    tmux new-session -d -s qsrr-profiler "QSRR_PROFILER=1 bash '$0'"
+    exec tmux attach -t qsrr-profiler
 fi
 
 echo "╔══════════════════════════════════════════════════════════════╗"
