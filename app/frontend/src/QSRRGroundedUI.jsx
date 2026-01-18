@@ -791,13 +791,23 @@ const QSRRGroundedUI = () => {
               </button>
               {showAddPanel && <AddPapersPanel onClose={() => setShowAddPanel(false)} onFilesSelected={handleFilesSelected} pendingFiles={pendingFiles} />}
             </div>
-            <input
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !isStreaming && !isIndexing && sendMessage()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !isStreaming && !isIndexing) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              onInput={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+              }}
               placeholder={isIndexing ? "Indexing papers..." : pendingFiles.length > 0 ? "Press Enter to index papers..." : isStreaming ? "Generating response..." : "Ask about your research papers..."}
               disabled={isStreaming || isIndexing || pendingFiles.length > 0}
-              className="flex-1 px-5 py-4 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 text-base shadow-xl disabled:opacity-50"
+              rows={1}
+              className="flex-1 px-5 py-4 bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 text-base shadow-xl disabled:opacity-50 resize-none overflow-hidden"
             />
             <button onClick={sendMessage} disabled={(pendingFiles.length === 0 && !input.trim()) || isStreaming || isIndexing} className="px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-2xl hover:from-blue-600 hover:to-purple-600 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed transition-all flex items-center shadow-xl hover:shadow-blue-500/25">
               {isIndexing ? <Loader2 size={18} className="animate-spin" /> : isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
