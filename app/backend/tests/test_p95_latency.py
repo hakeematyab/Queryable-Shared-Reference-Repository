@@ -101,13 +101,14 @@ async def run_latency_test(questions: list[dict]) -> dict:
 
 
 async def main():
+    global BASE_URL
+
     parser = argparse.ArgumentParser(description="P95 Latency Test")
     parser.add_argument("--index", action="store_true", help="Index papers before testing")
     parser.add_argument("--base-url", default=BASE_URL, help="Server base URL")
     parser.add_argument("--limit", type=int, default=0, help="Limit number of questions (0 = all)")
     args = parser.parse_args()
     
-    global BASE_URL
     BASE_URL = args.base_url
     
     with open(EVAL_DATASET) as f:

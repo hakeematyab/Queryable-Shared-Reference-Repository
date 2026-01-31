@@ -94,13 +94,14 @@ async def run_concurrent_test(session: aiohttp.ClientSession, questions: list[di
 
 
 async def main():
+    global BASE_URL
+
     parser = argparse.ArgumentParser(description="Load Test")
     parser.add_argument("--index", action="store_true", help="Index papers before testing")
     parser.add_argument("--base-url", default=BASE_URL, help="Server base URL")
     parser.add_argument("--questions-per-level", type=int, default=QUESTIONS_PER_LEVEL, help="Questions per concurrency level")
     args = parser.parse_args()
     
-    global BASE_URL
     BASE_URL = args.base_url
     
     with open(EVAL_DATASET) as f:
