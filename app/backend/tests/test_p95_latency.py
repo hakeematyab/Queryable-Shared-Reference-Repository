@@ -35,18 +35,21 @@ async def index_papers(session: aiohttp.ClientSession) -> bool:
     return False
 
 
-async def measure_chat_latency(session: aiohttp.ClientSession, question: str, thread_id: str) -> float:
+async def measure_chat_latency(session: aiohttp.ClientSession, question: str, thread_id: str) -> dict:
     start = time.perf_counter()
+    ttft = None
     
     async with session.post(f"{BASE_URL}/chat", json={"user_query": question, "thread_id": thread_id}) as resp:
         async for line in resp.content:
             text = line.decode().strip()
             if text.startswith("data: "):
                 data = json.loads(text[6:])
+                if data.get("token") and ttft is None:
+                    ttft = time.perf_counter() - start
                 if data.get("done") or data.get("error"):
                     break
     
-    return time.perf_counter() - start
+    return {"ttft": ttft, "total": time.perf_counter() - start}
 
 
 def calculate_percentile(data: list[float], p: int) -> float:
@@ -60,7 +63,8 @@ def calculate_percentile(data: list[float], p: int) -> float:
 
 
 async def run_latency_test(questions: list[dict]) -> dict:
-    latencies = []
+    ttft_list = []
+    total_list = []
     
     async with aiohttp.ClientSession() as session:
         try:
@@ -79,24 +83,38 @@ async def run_latency_test(questions: list[dict]) -> dict:
             
             print(f"[{i}/{total}] {q['id']}: {question_text[:50]}...")
             
-            latency = await measure_chat_latency(session, question_text, thread_id)
-            latencies.append(latency)
-            print(f"         -> {latency:.2f}s")
+            result = await measure_chat_latency(session, question_text, thread_id)
+            if result["ttft"] is not None:
+                ttft_list.append(result["ttft"])
+            total_list.append(result["total"])
+            ttft_str = f"{result['ttft']:.2f}s" if result["ttft"] else "N/A"
+            print(f"         -> TTFT: {ttft_str}, Total: {result['total']:.2f}s")
     
-    if not latencies:
+    if not total_list:
         return {}
     
     return {
-        "total_questions": len(latencies),
-        "min_latency": min(latencies),
-        "max_latency": max(latencies),
-        "mean_latency": statistics.mean(latencies),
-        "median_latency": statistics.median(latencies),
-        "p50": calculate_percentile(latencies, 50),
-        "p90": calculate_percentile(latencies, 90),
-        "p95": calculate_percentile(latencies, 95),
-        "p99": calculate_percentile(latencies, 99),
-        "all_latencies": latencies
+        "total_questions": len(total_list),
+        "ttft": {
+            "min": min(ttft_list) if ttft_list else None,
+            "max": max(ttft_list) if ttft_list else None,
+            "mean": statistics.mean(ttft_list) if ttft_list else None,
+            "p50": calculate_percentile(ttft_list, 50) if ttft_list else None,
+            "p90": calculate_percentile(ttft_list, 90) if ttft_list else None,
+            "p95": calculate_percentile(ttft_list, 95) if ttft_list else None,
+            "p99": calculate_percentile(ttft_list, 99) if ttft_list else None,
+        },
+        "total": {
+            "min": min(total_list),
+            "max": max(total_list),
+            "mean": statistics.mean(total_list),
+            "p50": calculate_percentile(total_list, 50),
+            "p90": calculate_percentile(total_list, 90),
+            "p95": calculate_percentile(total_list, 95),
+            "p99": calculate_percentile(total_list, 99),
+        },
+        "all_ttft": ttft_list,
+        "all_total": total_list
     }
 
 
@@ -131,16 +149,19 @@ async def main():
         print("No results collected")
         return
     
-    print("\n=== Results ===")
-    print(f"Total Questions: {results['total_questions']}")
-    print(f"Min Latency:     {results['min_latency']:.2f}s")
-    print(f"Max Latency:     {results['max_latency']:.2f}s")
-    print(f"Mean Latency:    {results['mean_latency']:.2f}s")
-    print(f"Median Latency:  {results['median_latency']:.2f}s")
-    print(f"P50:             {results['p50']:.2f}s")
-    print(f"P90:             {results['p90']:.2f}s")
-    print(f"P95:             {results['p95']:.2f}s")
-    print(f"P99:             {results['p99']:.2f}s")
+    ttft = results["ttft"]
+    total = results["total"]
+    
+    print("\n=== Time to First Token (TTFT) ===")
+    if ttft["p95"]:
+        print(f"Min:  {ttft['min']:.2f}s | Max: {ttft['max']:.2f}s | Mean: {ttft['mean']:.2f}s")
+        print(f"P50:  {ttft['p50']:.2f}s | P90: {ttft['p90']:.2f}s | P95: {ttft['p95']:.2f}s | P99: {ttft['p99']:.2f}s")
+    else:
+        print("No TTFT data")
+    
+    print("\n=== Total Response Time ===")
+    print(f"Min:  {total['min']:.2f}s | Max: {total['max']:.2f}s | Mean: {total['mean']:.2f}s")
+    print(f"P50:  {total['p50']:.2f}s | P90: {total['p90']:.2f}s | P95: {total['p95']:.2f}s | P99: {total['p99']:.2f}s")
     
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     results_file = RESULTS_DIR / "latency_results.json"

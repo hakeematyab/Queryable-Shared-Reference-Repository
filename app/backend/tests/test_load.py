@@ -40,6 +40,7 @@ async def send_request(session: aiohttp.ClientSession, question: str, thread_id:
     start = time.perf_counter()
     success = False
     error = None
+    ttft = None
     
     try:
         async with session.post(
@@ -51,6 +52,8 @@ async def send_request(session: aiohttp.ClientSession, question: str, thread_id:
                 text = line.decode().strip()
                 if text.startswith("data: "):
                     data = json.loads(text[6:])
+                    if data.get("token") and ttft is None:
+                        ttft = time.perf_counter() - start
                     if data.get("done"):
                         success = True
                         break
@@ -61,7 +64,7 @@ async def send_request(session: aiohttp.ClientSession, question: str, thread_id:
         error = str(e)
     
     elapsed = time.perf_counter() - start
-    return {"latency": elapsed, "success": success, "error": error}
+    return {"ttft": ttft, "latency": elapsed, "success": success, "error": error}
 
 
 async def run_concurrent_test(session: aiohttp.ClientSession, questions: list[dict], concurrency: int) -> dict:
@@ -76,6 +79,7 @@ async def run_concurrent_test(session: aiohttp.ClientSession, questions: list[di
     results = await asyncio.gather(*tasks)
     total_time = time.perf_counter() - start
     
+    ttft_list = [r["ttft"] for r in results if r["ttft"] is not None]
     latencies = [r["latency"] for r in results]
     successes = sum(1 for r in results if r["success"])
     
@@ -87,6 +91,7 @@ async def run_concurrent_test(session: aiohttp.ClientSession, questions: list[di
         "success_rate": successes / len(results) * 100 if results else 0,
         "total_time": total_time,
         "throughput": len(results) / total_time if total_time > 0 else 0,
+        "avg_ttft": sum(ttft_list) / len(ttft_list) if ttft_list else None,
         "avg_latency": sum(latencies) / len(latencies) if latencies else 0,
         "min_latency": min(latencies) if latencies else 0,
         "max_latency": max(latencies) if latencies else 0,
@@ -141,17 +146,20 @@ async def main():
             result = await run_concurrent_test(session, questions, concurrency)
             all_results.append(result)
             
+            ttft_str = f"{result['avg_ttft']:.2f}s" if result['avg_ttft'] else "N/A"
             print(f"  Success Rate:  {result['success_rate']:.1f}%")
             print(f"  Throughput:    {result['throughput']:.2f} req/s")
+            print(f"  Avg TTFT:      {ttft_str}")
             print(f"  Avg Latency:   {result['avg_latency']:.2f}s")
             print(f"  Min/Max:       {result['min_latency']:.2f}s / {result['max_latency']:.2f}s")
             print()
     
     print("=== Summary ===")
-    print(f"{'Concurrency':<12} {'Success%':<10} {'Throughput':<12} {'Avg Latency':<12}")
-    print("-" * 50)
+    print(f"{'Concurrency':<12} {'Success%':<10} {'Throughput':<12} {'Avg TTFT':<12} {'Avg Latency':<12}")
+    print("-" * 60)
     for r in all_results:
-        print(f"{r['concurrency']:<12} {r['success_rate']:<10.1f} {r['throughput']:<12.2f} {r['avg_latency']:<12.2f}")
+        ttft_str = f"{r['avg_ttft']:.2f}" if r['avg_ttft'] else "N/A"
+        print(f"{r['concurrency']:<12} {r['success_rate']:<10.1f} {r['throughput']:<12.2f} {ttft_str:<12} {r['avg_latency']:<12.2f}")
     
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     results_file = RESULTS_DIR / "load_results.json"
