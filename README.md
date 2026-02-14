@@ -6,7 +6,7 @@
   **Privacy-focused, on-premises RAG system for scientific literature**
   
   [![Demo Video](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red?style=for-the-badge)](https://youtu.be/rlyYthhlWJY)
-  [![GitHub](https://img.shields.io/badge/View_Code-GitHub-black?style=for-the-badge&logo=github)](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository)
+  [![GitHub](https://github.com/hakeematyab/Queryable-Shared-Reference-Repository/tree/main/app)
   
   *Built for Vitek Lab, Northeastern University*
 </div>
